@@ -68,7 +68,7 @@ class TouchPadImage(AbstractDK):
 
     IMAGE_HEIGHT = 480
     IMAGE_WIDTH = 800
-    TOUCH_SIZE = (480, 800)
+    TOUCH_SIZE = (800, 480)
 
 
 if __name__ == "__main__":
