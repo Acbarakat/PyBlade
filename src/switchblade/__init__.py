@@ -49,7 +49,7 @@ class BufferObj(ctypes.Structure):
 class SwitchBladeApp(object):
     """Python object to run and reference the app."""
 
-    SCREEN = (1 << 16) | 0
+    TOUCHPAD = (1 << 16) | 0
     DK_1 = (1 << 16) | 1
     DK_2 = (1 << 16) | 2
     DK_3 = (1 << 16) | 3

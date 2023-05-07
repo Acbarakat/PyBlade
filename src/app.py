@@ -32,7 +32,7 @@ TP_BFO = BufferObj(0, TP.IMAGEDATA_SIZE, TP.toRGB565())
 def main():
     """Run the simple pyBlade app."""
     with SwitchBladeApp() as sba:
-        sba._SwitchBladeDLL.RzSBRenderBuffer(sba.SCREEN, ctypes.byref(TP_BFO))
+        sba._SwitchBladeDLL.RzSBRenderBuffer(sba.TOUCHPAD, ctypes.byref(TP_BFO))
 
         for i in range(10):
             DK.IMAGE_BUFFER = Image.new("RGB", DK.KEY_SIZE,
