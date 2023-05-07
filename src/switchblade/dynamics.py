@@ -34,7 +34,7 @@ class AbstractDK(ABC):
 
     def __init__(self):
         self.IMAGE_BUFFER = Image.new("RGB",
-                                      (self.IMAGE_HEIGHT, self.IMAGE_WIDTH),
+                                      (self.IMAGE_WIDTH, self.IMAGE_HEIGHT),
                                       0x00FF00)
 
     @property
