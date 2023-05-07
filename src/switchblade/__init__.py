@@ -61,7 +61,7 @@ class SwitchBladeApp(object):
     DK_9 = (1 << 16) | 9
     DK_10 = (1 << 16) | 10
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._SwitchBladeDLL = ctypes.CDLL(SWITCHBLADE_DLL_PATH)
         self._SwitchBladeDLL.RzSBStart.restype = ctypes.HRESULT
         self._SwitchBladeDLL.RzSBStop.restype = ctypes.HRESULT
@@ -69,17 +69,17 @@ class SwitchBladeApp(object):
         self._SwitchBladeDLL.RzSBRenderBuffer.argtype = [ctypes.c_int,
                                                          BufferObj]
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "<SwitchBladeApp (%s)>" % self._SwitchBladeDLL
 
-    def __enter__(self):
+    def __enter__(self) -> object:
         hresult = self._SwitchBladeDLL.RzSBStart()
         # print(hresult)
         if hresult != S_OK:
             raise RuntimeError()
         return self
 
-    def __exit__(self, type, value, traceback):
+    def __exit__(self, type, value, traceback) -> int:
         hresult = self._SwitchBladeDLL.RzSBStop()
         # print(hresult)
         if hresult != S_OK:

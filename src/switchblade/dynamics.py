@@ -32,16 +32,16 @@ class AbstractDK(ABC):
     IMAGE_HEIGHT = 115
     IMAGE_WIDTH = 115
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.IMAGE_BUFFER = Image.new("RGB",
                                       (self.IMAGE_WIDTH, self.IMAGE_HEIGHT),
                                       0x00FF00)
 
     @property
-    def IMAGEDATA_SIZE(self):
+    def IMAGEDATA_SIZE(self) -> tuple:
         return self.IMAGE_HEIGHT * self.IMAGE_WIDTH * struct.calcsize("H")
 
-    def toRGB565(self):
+    def toRGB565(self) -> bytes:
         """Convert image to RGB565 format."""
         data = []
 
