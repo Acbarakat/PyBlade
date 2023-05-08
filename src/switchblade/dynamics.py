@@ -6,9 +6,11 @@ Todo:
     * Interpret error codes to python Exceptions
 
 """
-from abc import ABC
+from abc import ABC, abstractmethod
 
 import struct
+import cv2
+import numpy as np
 from PIL import Image
 
 # defines taken from <SwitchBladeSDK_defines.h>
@@ -31,36 +33,48 @@ class AbstractDK(ABC):
 
     IMAGE_HEIGHT = 115
     IMAGE_WIDTH = 115
+    SIZE = (115, 115)
 
     def __init__(self) -> None:
-        self.IMAGE_BUFFER = Image.new("RGB",
-                                      (self.IMAGE_WIDTH, self.IMAGE_HEIGHT),
-                                      0x00FF00)
+        self._buffer = Image.new("RGB",
+                                 (self.IMAGE_WIDTH, self.IMAGE_HEIGHT),
+                                 0x00FF00)
+        self._buffer = np.array(self._buffer)
 
+    @classmethod
     @property
-    def IMAGEDATA_SIZE(self) -> tuple:
-        return self.IMAGE_HEIGHT * self.IMAGE_WIDTH * struct.calcsize("H")
+    def IMAGEDATA_SIZE(cls) -> tuple:
+        return cls.IMAGE_HEIGHT * cls.IMAGE_WIDTH * struct.calcsize("H")
+
+    def load_file(self, fpath) -> None:
+        im = Image.open(fpath).resize(self.SIZE)
+        self._buffer = cv2.cvtColor(np.array(im), cv2.COLOR_RGB2BGR)
+
+    def show(self) -> None:
+        cv2.imshow("image", self._buffer)
+        cv2.waitKey()
+
+    def _fixImage(self):
+        return self._buffer
 
     def toRGB565(self) -> bytes:
         """Convert image to RGB565 format."""
-        data = []
-
-        for pix in list(self.IMAGE_BUFFER.getdata()):
-            r = (pix[0] >> 3) & 0x1F
-            g = (pix[1] >> 2) & 0x3F
-            b = (pix[2] >> 3) & 0x1F
-
-            x = struct.pack('H', (r << 11) + (g << 5) + b)
-
-            data.append(x)
-
-        return b''.join(data)
+        buffer = self._fixImage()
+        im = cv2.cvtColor(buffer, cv2.COLOR_BGR2BGR565)
+        assert im.nbytes == self.IMAGEDATA_SIZE, f"Image is {im.nbytes} bytes when it should be {self.IMAGEDATA_SIZE}"  # noqa: E501
+        return im.tobytes()
 
 
 class DynamicKeyImage(AbstractDK):
     """Image class for Dynamic Keys."""
-
-    KEY_SIZE = (115, 115)
+    def _fixImage(self):
+        """Render method for dynamic keys is at a diagonal/two-triangle."""
+        i = 0
+        for row in self._buffer:
+            if i > 0:
+                self._buffer[i] = np.roll(row, i * 3)
+            i += 1
+        return self._buffer
 
 
 class TouchPadImage(AbstractDK):
@@ -68,16 +82,19 @@ class TouchPadImage(AbstractDK):
 
     IMAGE_HEIGHT = 480
     IMAGE_WIDTH = 800
-    TOUCH_SIZE = (800, 480)
+    SIZE = (800, 480)
 
 
 if __name__ == "__main__":
-    from PIL import ImageOps
+    import os
 
     DK = DynamicKeyImage()
-    DK.IMAGE_BUFFER.show()
-    print(DK.IMAGEDATA_SIZE)
-    print(len(DK.toRGB565()) == DK.IMAGEDATA_SIZE)
+    DK.show()
 
-    i = ImageOps.invert(DK.IMAGE_BUFFER)
-    i.show()
+    fpath = os.path.join(os.path.dirname(__file__),
+                         "..",
+                         "assets",
+                         "tonberry_115.png")
+    fpath = os.path.abspath(fpath)
+    DK.load_file(fpath)
+    DK.show()
