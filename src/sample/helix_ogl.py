@@ -8,8 +8,7 @@ from OpenGL.GL import GL_TRIANGLE_STRIP, GL_MODELVIEW, GL_PROJECTION,\
     GL_COLOR_BUFFER_BIT, GL_DEPTH_BUFFER_BIT, GL_TEXTURE_2D, GL_TEXTURE_ENV,\
     GL_TEXTURE_ENV_MODE, GL_MODULATE, GL_TEXTURE_WRAP_S, GL_REPEAT, GL_RGB,\
     GL_TEXTURE_WRAP_T, GL_TEXTURE_MAG_FILTER, GL_LINEAR, GL_RGBA, GL_BLEND,\
-    GL_SRC_ALPHA, GL_ONE, GL_TEXTURE_MIN_FILTER, GL_UNSIGNED_SHORT_5_6_5,\
-    GL_ONE_MINUS_SRC_COLOR, GL_ONE_MINUS_DST_COLOR, GL_DEPTH_TEST
+    GL_SRC_ALPHA, GL_ONE, GL_TEXTURE_MIN_FILTER, GL_UNSIGNED_SHORT_5_6_5
 from OpenGL.GL import glBegin, glEnd, glClear, glClearColor, glGenTextures,\
     glMatrixMode, glLoadIdentity, glBindTexture, glTexEnvf, glTexParameterf,\
     glTexParameteri, glTexImage2Df, glEnable, glBlendFunc, glTexCoord2f,\
@@ -100,17 +99,16 @@ def render(texture, texdata, t) -> bytes:
 
     pygame.display.flip()
 
-    # TODO: Flip for the TOUCHPAD
     buffer = glReadPixels(0, 0, *screen.get_size(),
                           GL_RGB, GL_UNSIGNED_SHORT_5_6_5)
-    # buffer = np.flipud(buffer)
+    buffer.shape = (480, 800)
 
-    return buffer.tobytes()
+    return np.flipud(buffer)
 
 
 if __name__ == "__main__":
     pygame.init()
-    screen = pygame.display.set_mode(TouchPadImage.TOUCH_SIZE,
+    screen = pygame.display.set_mode(TouchPadImage.SIZE,
                                      pygame.OPENGL | pygame.DOUBLEBUF | pygame.HWSURFACE)  # noqa: E501
     print(pygame.display.Info())
 
@@ -149,9 +147,9 @@ if __name__ == "__main__":
         clock = pygame.time.Clock()
         texture = prerender()
         while True:
-            image = render(texture, texdata, (t := t + 1))
-            # TP.IMAGE_BUFFER = image
-            TP_BFO.pData = image
+            TP._buffer = render(texture, texdata, (t := t + 1))
+
+            TP_BFO.pData = TP._buffer.tobytes()
             sba._SwitchBladeDLL.RzSBRenderBuffer(sba.TOUCHPAD,
                                                  ctypes.byref(TP_BFO))
             clock.tick()
