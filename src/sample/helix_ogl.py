@@ -8,7 +8,7 @@ from OpenGL.GL import GL_TRIANGLE_STRIP, GL_MODELVIEW, GL_PROJECTION,\
     GL_COLOR_BUFFER_BIT, GL_DEPTH_BUFFER_BIT, GL_TEXTURE_2D, GL_TEXTURE_ENV,\
     GL_TEXTURE_ENV_MODE, GL_MODULATE, GL_TEXTURE_WRAP_S, GL_REPEAT, GL_RGB,\
     GL_TEXTURE_WRAP_T, GL_TEXTURE_MAG_FILTER, GL_LINEAR, GL_RGBA, GL_BLEND,\
-    GL_SRC_ALPHA, GL_ONE, GL_TEXTURE_MIN_FILTER, GL_UNSIGNED_SHORT_5_6_5_REV,\
+    GL_SRC_ALPHA, GL_ONE, GL_TEXTURE_MIN_FILTER, GL_UNSIGNED_SHORT_5_6_5,\
     GL_ONE_MINUS_SRC_COLOR, GL_ONE_MINUS_DST_COLOR, GL_DEPTH_TEST
 from OpenGL.GL import glBegin, glEnd, glClear, glClearColor, glGenTextures,\
     glMatrixMode, glLoadIdentity, glBindTexture, glTexEnvf, glTexParameterf,\
@@ -101,10 +101,9 @@ def render(texture, texdata, t) -> bytes:
     pygame.display.flip()
 
     # TODO: Flip for the TOUCHPAD
-    # TODO: The color is off, blue is red
     buffer = glReadPixels(0, 0, *screen.get_size(),
-                          GL_RGB, GL_UNSIGNED_SHORT_5_6_5_REV)
-    # buffer = np.fliplr(buffer)
+                          GL_RGB, GL_UNSIGNED_SHORT_5_6_5)
+    # buffer = np.flipud(buffer)
 
     return buffer.tobytes()
 
