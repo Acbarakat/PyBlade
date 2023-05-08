@@ -6,7 +6,7 @@ Todo:
     * Interpret error codes to python Exceptions
 
 """
-from abc import ABC, abstractmethod
+from abc import ABC
 
 import struct
 import cv2
