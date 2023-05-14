@@ -1,7 +1,22 @@
+# -*- coding: utf-8 -*-
+"""
+Simple app rendering OGL helix rotating.
+
+Attributes:
+    CATEGORIES (tuple): A tuple of the types of ``models`` trained
+    IMAGES (np.ndarray): A list or URIs converted to loaded and resized
+        image data
+    DF (pd.DataFrame): A dataframe full of accurate card data which
+        we will compare model predictions against
+
+Todo:
+    * Play with texdata more
+
+"""
 import sys
 import os
 import ctypes
-from math import cos, sin, pi
+from math import cos, sin
 
 import numpy as np
 from OpenGL.GL import GL_TRIANGLE_STRIP, GL_MODELVIEW, GL_PROJECTION,\
@@ -12,7 +27,7 @@ from OpenGL.GL import GL_TRIANGLE_STRIP, GL_MODELVIEW, GL_PROJECTION,\
 from OpenGL.GL import glBegin, glEnd, glClear, glClearColor, glGenTextures,\
     glMatrixMode, glLoadIdentity, glBindTexture, glTexEnvf, glTexParameterf,\
     glTexParameteri, glTexImage2Df, glEnable, glBlendFunc, glTexCoord2f,\
-    glVertex3f, glFlush, glDeleteTextures, glReadPixels
+    glVertex3f, glFlush, glDeleteTextures, glReadPixels, glRotatef
 from OpenGL.GLU import gluPerspective, gluLookAt
 import pygame
 
@@ -23,20 +38,24 @@ from switchblade import BufferObj, SwitchBladeApp  # noqa: E402
 from switchblade.dynamics import TouchPadImage  # noqa: E402
 
 
-def spiral(r=15.0, d=5, x=200, pulse2=1.0, **kwargs) -> None:
+def spiral(t, r=15.0, d=5, x=200, pulse2=1.0, **kwargs) -> None:
     """Build the Spiral's vertex and texture data."""
+    # angle = abs(sin(t / 200))
+    glRotatef(5.0, 0, 1.0, 0)
     glBegin(GL_TRIANGLE_STRIP)
     for i in range(0, x):
         if i % 2 == 0:
             glTexCoord2f(0, i)
-            # glVertex3f(cos(i/r), -2.5+i*0.05, sin(i/r))
-            glVertex3f(cos(i / r) * pulse2, -2.5 + i * 0.05,
-                       sin(i / r) * pulse2)
+            glVertex3f(cos(i / r),
+                       -2.5 + i * 0.05,
+                       sin(i / r))
+            # glVertex3f(cos(i / r) * pulse2, -2.5 + i * 0.05, sin(i / r) * pulse2)  # noqa: E501
         else:
             glTexCoord2f(1, i)
-            # glVertex3f(cos(i/r+3.14), -2.5+i*0.05+d, sin(i/r+3.14))
-            glVertex3f(cos(i / r + pi) * pulse2, -2.5 + i * 0.05 + d + pulse2,
-                       sin(i / r + pi) * pulse2)
+            glVertex3f(cos(i / r + 3.14),
+                       -2.5 + i * 0.05 + d,
+                       sin(i / r + 3.14))
+            # glVertex3f(cos(i / r + pi) * pulse2, -2.5 + i * 0.05 + d + pulse2, sin(i / r + pi) * pulse2)  # noqa: E501
     glEnd()
 
 
@@ -55,10 +74,14 @@ def render(texture, texdata, t) -> bytes:
     gluPerspective(90, 1, 0.01, 1000)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
-    gluLookAt(sin(t / 200.0) * 3,
-              sin(t / 500.0) * 3,
-              cos(t / 200.0) * 3,
-              0, 0, 0, 0, 1, 0)
+    # gluLookAt(0, 0, 0, 0, 0, 0, 0, 1, 0)
+
+    eye = (sin(t / 200.0) * 3,
+           sin(t / 500.0) * 3,
+           cos(t / 200.0) * 3)
+    eye = (2.0, 1., 1.5)
+
+    gluLookAt(*eye, 0, 0, 0, 0, 1, 0)
 
     # Draw the helix (this ought to be a display list call)
 
@@ -91,7 +114,7 @@ def render(texture, texdata, t) -> bytes:
     glEnable(GL_TEXTURE_2D)
     glBindTexture(GL_TEXTURE_2D, texture)
 
-    spiral(pulse=pulse)
+    spiral(t, pulse2=pulse)
 
     glFlush()
 
@@ -139,6 +162,11 @@ if __name__ == "__main__":
     texdata.itemset((1, 1, 3), 1)
     texdata.itemset((1, 3, 1), 1)
     texdata.itemset((1, 3, 3), 1)
+    # texdata.itemset((2, 0, 1), 1)
+    # texdata.itemset((2, 0, 3), 1)
+    texdata.itemset((2, 1, 0), 1)
+    texdata.itemset((2, 1, 3), 1)
+    texdata.itemset((2, 2, 3), 1)
 
     TP = TouchPadImage()
     TP_BFO = BufferObj(0, TP.IMAGEDATA_SIZE, TP.toRGB565())
