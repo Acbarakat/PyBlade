@@ -6,10 +6,20 @@ Todo:
     * Interpret error codes to python Exceptions
 
 """
+import os
+import sys
 import ctypes
 
-SWITCHBLADE_DLL_PATH = "C:\\ProgramData\\Razer\\SwitchBlade\\SDK\\RzSwitchbladeSDK2.dll"  # noqa: E501
-KEYBOARD_DLL_PATH = "C:\\Program Files (x86)\\Razer\\SwitchBlade\\RzAPISwitchBlade.dll"  # noqa: E501
+os.add_dll_directory("D:\\cpp\\boost_1_82_0\\stage\\lib")
+os.add_dll_directory("C:\\ProgramData\\Razer\\SwitchBlade\\SDK\\")
+
+try:
+    from .boostedblade import App, DKTYPE, KEYSTATE
+except ImportError:
+    from boostedblade import App, DKTYPE, KEYSTATE
+
+if (is_64bits := sys.maxsize > 2**32):
+    raise RuntimeError("This cannot be run in 64-bit python.")
 
 S_OK = 0
 E_FAIL = -2147467259  # 0x80004005L
@@ -46,7 +56,7 @@ class BufferObj(ctypes.Structure):
                 ("pData", ctypes.c_char_p)]
 
 
-class SwitchBladeApp(object):
+class SwitchBladeApp(App):
     """Python object to run and reference the app."""
 
     TOUCHPAD = (1 << 16) | 0
@@ -62,26 +72,28 @@ class SwitchBladeApp(object):
     DK_10 = (1 << 16) | 10
 
     def __init__(self) -> None:
-        self._SwitchBladeDLL = ctypes.CDLL(SWITCHBLADE_DLL_PATH)
-        self._SwitchBladeDLL.RzSBStart.restype = ctypes.HRESULT
-        self._SwitchBladeDLL.RzSBStop.restype = ctypes.HRESULT
-        self._SwitchBladeDLL.RzSBRenderBuffer.restype = ctypes.HRESULT
-        self._SwitchBladeDLL.RzSBRenderBuffer.argtype = [ctypes.c_int,
-                                                         BufferObj]
+        super(SwitchBladeApp, self).__init__()
 
     def __repr__(self) -> str:
-        return "<SwitchBladeApp (%s)>" % self._SwitchBladeDLL
+        return "<SwitchBladeApp>"
 
     def __enter__(self) -> object:
-        hresult = self._SwitchBladeDLL.RzSBStart()
-        # print(hresult)
+        hresult = self.start()
+        print(hresult)
         if hresult != S_OK:
             raise RuntimeError()
         return self
 
     def __exit__(self, type, value, traceback) -> int:
-        hresult = self._SwitchBladeDLL.RzSBStop()
+        hresult = self.stop()
         # print(hresult)
         if hresult != S_OK:
             raise RuntimeError()
         return hresult
+
+    def dkcallback(self, key, state):
+        if key == DKTYPE.NONE or state == KEYSTATE.NONE:
+            return (key, state)
+
+        print(key, state)
+        return (key, state)
