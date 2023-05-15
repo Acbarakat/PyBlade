@@ -26,5 +26,13 @@ typedef HRESULT(STDMETHODCALLTYPE KeyboardEvent)(UINT uMsg, WPARAM wParam, LPARA
 
 struct dk_state {
     RZSBSDK_DKTYPE dk;
-    RZSBSDK_KEYSTATETYPE state;
+    RZSBSDK_KEYSTATETYPE dkState;
+};
+
+#define InvalidAppEvent(a) (RZSBSDK_EVENT_NONE > a || a >= RZSBSDK_EVENT_INVALID)
+
+struct app_event {
+    RZSBSDK_EVENTTYPETYPE rzEvent;
+    DWORD dwAppMode;
+    DWORD dwProcessID;
 };

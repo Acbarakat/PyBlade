@@ -171,7 +171,7 @@ if __name__ == "__main__":
     with SwitchBladeApp() as sba:
         clock = pygame.time.Clock()
         texture = prerender()
-        while True:
+        while sba.active:
             buffer = render(texture, texdata, (t := t + 1))
 
             sba.render_touchpad(buffer.tobytes())

@@ -14,9 +14,9 @@ os.add_dll_directory("D:\\cpp\\boost_1_82_0\\stage\\lib")
 os.add_dll_directory("C:\\ProgramData\\Razer\\SwitchBlade\\SDK\\")
 
 try:
-    from .boostedblade import App, DKTYPE, KEYSTATE
+    from .boostedblade import App, DKTYPE, KEYSTATE, EVENTTYPE
 except ImportError:
-    from boostedblade import App, DKTYPE, KEYSTATE
+    from boostedblade import App, DKTYPE, KEYSTATE, EVENTTYPE
 
 if (is_64bits := sys.maxsize > 2**32):
     raise RuntimeError("This cannot be run in 64-bit python.")
@@ -73,6 +73,7 @@ class SwitchBladeApp(App):
 
     def __init__(self) -> None:
         super(SwitchBladeApp, self).__init__()
+        self.active = True
 
     def __repr__(self) -> str:
         return "<SwitchBladeApp>"
@@ -92,8 +93,16 @@ class SwitchBladeApp(App):
         return hresult
 
     def dkcallback(self, key, state):
-        if key == DKTYPE.NONE or state == KEYSTATE.NONE:
-            return (key, state)
+        # if key == DKTYPE.NONE or state == KEYSTATE.NONE:
+        #    return (key, state)
 
         print(key, state)
         return (key, state)
+
+    def aecallback(self, event, appMode, processId):
+        # if event == EVENTTYPE.NONE:
+        #    return (event, appMode, processId)
+        if event == EVENTTYPE.DEACTIVATED:
+            self.active = False
+        print(event, appMode, processId)
+        return (event, appMode, processId)

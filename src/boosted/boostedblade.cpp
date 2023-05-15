@@ -15,6 +15,7 @@ using namespace boost::python;
 namespace np = boost::python::numpy;
 
 static boost::lockfree::queue <dk_state> dkq;
+static boost::lockfree::queue <app_event> aeq;
 
 struct App
 {
@@ -38,14 +39,25 @@ public:
         std::cout << "destoyed";
     };
     void check_callbacks() {
-        dk_state y;
-        dkq.pop(y);
-        dkcallback(y);
+        //dynamic keys
+        dk_state dk;
+        dkq.pop(dk);
+        if (!InvalidDynamicKey(dk.dk) && !InvalidKeyState(dk.dkState)) dkcallback(dk);
+
+        //app event
+        app_event ae;
+        aeq.pop(ae);
+        if (!InvalidAppEvent(ae.rzEvent)) aecallback(ae);
     }
     virtual boost::python::tuple dkcallback(dk_state y) {
-        if (InvalidDynamicKey(y.dk) || InvalidKeyState(y.state)) return boost::python::make_tuple(0, 0);
-        std::cout << "DK_" << std::to_string(y.dk) << " with state" << std::to_string(y.state) << std::endl << std::flush;
-        return boost::python::make_tuple(y.dk, y.state);
+        if (InvalidDynamicKey(y.dk) || InvalidKeyState(y.dkState)) return boost::python::make_tuple(0, 0);
+        std::cout << "DK_" << std::to_string(y.dk) << " with state" << std::to_string(y.dkState) << std::endl << std::flush;
+        return boost::python::make_tuple(y.dk, y.dkState);
+    };
+    virtual boost::python::tuple aecallback(app_event y) {
+        //if (InvalidDynamicKey(y.dk) || InvalidKeyState(y.dkState)) return boost::python::make_tuple(0, 0);
+        //std::cout << "DK_" << std::to_string(y.dk) << " with state" << std::to_string(y.dkState) << std::endl << std::flush;
+        return boost::python::make_tuple(y.rzEvent, y.dwAppMode, y.dwProcessID);
     };
     HRESULT start() {
         HRESULT hReturn = S_OK;
@@ -99,11 +111,11 @@ private:
     static HRESULT STDMETHODCALLTYPE
     MyDynamicKeyCallback(RZSBSDK_DKTYPE dk, RZSBSDK_KEYSTATETYPE dkState)
     {
-        dk_state x;
-        x.dk = InvalidDynamicKey(dk) ? RZSBSDK_DK_INVALID : dk;
-        x.state = InvalidKeyState(dkState) ? RZSBSDK_KEYSTATE_INVALID : dkState;
+        dk_state d;
+        d.dk = InvalidDynamicKey(dk) ? RZSBSDK_DK_INVALID : dk;
+        d.dkState = InvalidKeyState(dkState) ? RZSBSDK_KEYSTATE_INVALID : dkState;
 
-        dkq.push(x);
+        if (d.dk != RZSBSDK_DK_INVALID && d.dkState != RZSBSDK_KEYSTATE_INVALID) dkq.push(d);
 
         return S_OK;
     }
@@ -116,7 +128,12 @@ private:
     {
         HRESULT hr = S_OK;
 
-        std::cout << "app event" << std::flush;
+        app_event ae;
+        ae.rzEvent = InvalidAppEvent(rzEvent) ? RZSBSDK_EVENT_INVALID : rzEvent;
+        ae.dwAppMode = dwAppMode;
+        ae.dwProcessID = dwProcessID;
+
+        if (ae.rzEvent != RZSBSDK_EVENT_INVALID) aeq.push(ae);
 
         return hr;
     }
@@ -151,11 +168,20 @@ struct AppWrap : App, public boost::python::wrapper<App> {
     virtual boost::python::tuple dkcallback(dk_state y) override {
         if (override f = this->get_override("dkcallback")) {
             if (InvalidDynamicKey(y.dk)) return this->get_override("dkcallback")(RZSBSDK_DK_NONE, RZSBSDK_KEYSTATE_NONE);
-            if (InvalidKeyState(y.state)) return this->get_override("dkcallback")(y.dk, RZSBSDK_KEYSTATE_NONE);
-            return this->get_override("dkcallback")(y.dk, y.state);
+            if (InvalidKeyState(y.dkState)) return this->get_override("dkcallback")(y.dk, RZSBSDK_KEYSTATE_NONE);
+            return this->get_override("dkcallback")(y.dk, y.dkState);
         }
         else {
             return App::dkcallback(y);
+        };
+    };
+    virtual boost::python::tuple aecallback(app_event y) override {
+        if (override f = this->get_override("aecallback")) {
+            if (InvalidAppEvent(y.rzEvent)) return this->get_override("aecallback")(RZSBSDK_EVENT_NONE, y.dwAppMode, y.dwProcessID);
+            return this->get_override("aecallback")(y.rzEvent, y.dwAppMode, y.dwProcessID);
+        }
+        else {
+            return App::aecallback(y);
         };
     };
 };
@@ -182,9 +208,18 @@ BOOST_PYTHON_MODULE(boostedblade)
 
     enum_<RZSBSDK_KEYSTATETYPE>("KEYSTATE")
         .value("NONE", RZSBSDK_KEYSTATETYPE::RZSBSDK_KEYSTATE_NONE)
-        .value("Up", RZSBSDK_KEYSTATETYPE::RZSBSDK_KEYSTATE_UP)
-        .value("Down", RZSBSDK_KEYSTATETYPE::RZSBSDK_KEYSTATE_DOWN)
-        .value("Hold", RZSBSDK_KEYSTATETYPE::RZSBSDK_KEYSTATE_HOLD)
+        .value("UP", RZSBSDK_KEYSTATETYPE::RZSBSDK_KEYSTATE_UP)
+        .value("DOWN", RZSBSDK_KEYSTATETYPE::RZSBSDK_KEYSTATE_DOWN)
+        .value("HOLD", RZSBSDK_KEYSTATETYPE::RZSBSDK_KEYSTATE_HOLD)
+        .export_values()
+        ;
+
+    enum_<RZSBSDK_EVENTTYPETYPE>("EVENTTYPE")
+        .value("NONE", RZSBSDK_EVENTTYPETYPE::RZSBSDK_EVENT_NONE)
+        .value("ACTIVATED", RZSBSDK_EVENTTYPETYPE::RZSBSDK_EVENT_ACTIVATED)
+        .value("DEACTIVATED", RZSBSDK_EVENTTYPETYPE::RZSBSDK_EVENT_DEACTIVATED)
+        .value("CLOSE", RZSBSDK_EVENTTYPETYPE::RZSBSDK_EVENT_CLOSE)
+        .value("EXIT", RZSBSDK_EVENTTYPETYPE::RZSBSDK_EVENT_EXIT)
         .export_values()
         ;
 
