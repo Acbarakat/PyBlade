@@ -23,3 +23,8 @@ typedef HRESULT(STDMETHODCALLTYPE KeyboardEvent)(UINT uMsg, WPARAM wParam, LPARA
 
 #define InvalidDynamicKey(a) (RZSBSDK_DK_NONE > a || a >= RZSBSDK_DK_INVALID)
 #define InvalidKeyState(a) (RZSBSDK_KEYSTATE_NONE > a || a >= RZSBSDK_KEYSTATE_INVALID)
+
+struct dk_state {
+    RZSBSDK_DKTYPE dk;
+    RZSBSDK_KEYSTATETYPE state;
+};

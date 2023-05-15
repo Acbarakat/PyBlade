@@ -14,25 +14,6 @@ using namespace std;
 using namespace boost::python;
 namespace np = boost::python::numpy;
 
-static HRESULT STDMETHODCALLTYPE MyAppEventCallback(
-    RZSBSDK_EVENTTYPETYPE rzEvent,
-    DWORD dwAppMode,
-    DWORD dwProcessID
-)
-{
-    HRESULT hr = S_OK;
-
-    //hr = CFunctionTestDlg::ApplicationEventCallback(rzEvent, dwAppMode, dwProcessID);
-    std::cout << "app event" << std::flush;
-
-    return hr;
-}
-
-struct dk_state {
-    RZSBSDK_DKTYPE dk;
-    RZSBSDK_KEYSTATETYPE state;
-};
-
 static boost::lockfree::queue <dk_state> dkq;
 
 struct App
@@ -103,19 +84,63 @@ private:
             std::cout << "Failed to set key callback!" << std::to_string(hReturn);
         }
         
-        //hReturn = RzSBGestureSetCallback(reinterpret_cast<GestureEvent*>(MyGestureCallback));
-        //hReturn = RzSBKeyboardCaptureSetCallback(reinterpret_cast<KeyboardEvent*>(MyKeyboardCallback));
+        hReturn = RzSBGestureSetCallback(reinterpret_cast<GestureEvent*>(MyGestureCallback));
+        if (!RZSB_SUCCESS(hReturn))
+        {
+            std::cout << "Failed to set gesture callback!" << std::to_string(hReturn);
+        }
+
+        hReturn = RzSBKeyboardCaptureSetCallback(reinterpret_cast<KeyboardEvent*>(MyKeyboardCallback));
+        if (!RZSB_SUCCESS(hReturn))
+        {
+            std::cout << "Failed to set keyboard callback!" << std::to_string(hReturn);
+        }
     }
     static HRESULT STDMETHODCALLTYPE
     MyDynamicKeyCallback(RZSBSDK_DKTYPE dk, RZSBSDK_KEYSTATETYPE dkState)
     {
-        HRESULT hr = S_OK;
-
         dk_state x;
         x.dk = InvalidDynamicKey(dk) ? RZSBSDK_DK_INVALID : dk;
         x.state = InvalidKeyState(dkState) ? RZSBSDK_KEYSTATE_INVALID : dkState;
 
         dkq.push(x);
+
+        return S_OK;
+    }
+    static HRESULT STDMETHODCALLTYPE
+    MyAppEventCallback(
+        RZSBSDK_EVENTTYPETYPE rzEvent,
+        DWORD dwAppMode,
+        DWORD dwProcessID
+    )
+    {
+        HRESULT hr = S_OK;
+
+        std::cout << "app event" << std::flush;
+
+        return hr;
+    }
+    static HRESULT STDMETHODCALLTYPE
+    MyGestureCallback(
+        RZSBSDK_GESTURETYPE gesture,
+        DWORD dwParameters,
+        WORD wXPos,
+        WORD wYPos,
+        WORD wZPos
+    )
+    {
+        HRESULT hr = S_OK;
+
+        //hr = CFunctionTestDlg::GestureEventCallback(gesture, dwParameters, wXPos, wYPos, wZPos);
+
+        return hr;
+    }
+    static HRESULT STDMETHODCALLTYPE
+    MyKeyboardCallback(UINT uMsg, WPARAM wParam, LPARAM lParam)
+    {
+        HRESULT hr = S_OK;
+
+        // hr = CFunctionTestDlg::KeyboardEventCallback(uMsg, wParam, lParam);
 
         return hr;
     }
