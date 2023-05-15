@@ -168,18 +168,15 @@ if __name__ == "__main__":
     texdata.itemset((2, 1, 3), 1)
     texdata.itemset((2, 2, 3), 1)
 
-    TP = TouchPadImage()
-    TP_BFO = BufferObj(0, TP.IMAGEDATA_SIZE, TP.toRGB565())
-
     with SwitchBladeApp() as sba:
         clock = pygame.time.Clock()
         texture = prerender()
         while True:
-            TP._buffer = render(texture, texdata, (t := t + 1))
+            buffer = render(texture, texdata, (t := t + 1))
 
-            TP_BFO.pData = TP._buffer.tobytes()
-            sba._SwitchBladeDLL.RzSBRenderBuffer(sba.TOUCHPAD,
-                                                 ctypes.byref(TP_BFO))
+            sba.render_touchpad(buffer.tobytes())
+            sba.check_callbacks()
+
             clock.tick()
             FPS = clock.get_fps()
             pygame.display.set_caption("fps: " + str(clock.get_fps()))
