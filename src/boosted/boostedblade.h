@@ -36,3 +36,19 @@ struct app_event {
     DWORD dwAppMode;
     DWORD dwProcessID;
 };
+
+#define InvalidGestureEvent(a) (RZSBSDK_GESTURE_NONE > a || a >= RZSBSDK_GESTURE_INVALID)
+
+struct gesture_event {
+    RZSBSDK_GESTURETYPE gesture;
+    DWORD dwParameters;
+    WORD wXPos;
+    WORD wYPos;
+    WORD wZPos;
+};
+
+#define InvalidKeyboardEvent(a) ()
+
+struct keyboard_event {
+
+};

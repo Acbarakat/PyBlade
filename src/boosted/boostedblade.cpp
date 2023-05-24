@@ -16,6 +16,8 @@ namespace np = boost::python::numpy;
 
 static boost::lockfree::queue <dk_state> dkq;
 static boost::lockfree::queue <app_event> aeq;
+static boost::lockfree::queue <gesture_event> geq;
+static boost::lockfree::queue <keyboard_event> keq;
 
 struct App
 {
@@ -115,7 +117,7 @@ private:
         d.dk = InvalidDynamicKey(dk) ? RZSBSDK_DK_INVALID : dk;
         d.dkState = InvalidKeyState(dkState) ? RZSBSDK_KEYSTATE_INVALID : dkState;
 
-        if (d.dk != RZSBSDK_DK_INVALID && d.dkState != RZSBSDK_KEYSTATE_INVALID) dkq.push(d);
+        if (d.dk != RZSBSDK_DK_INVALID && d.dkState != RZSBSDK_KEYSTATE_INVALID && d.dk != RZSBSDK_DK_NONE && d.dkState != RZSBSDK_KEYSTATE_NONE) dkq.push(d);
 
         return S_OK;
     }
@@ -133,7 +135,7 @@ private:
         ae.dwAppMode = dwAppMode;
         ae.dwProcessID = dwProcessID;
 
-        if (ae.rzEvent != RZSBSDK_EVENT_INVALID) aeq.push(ae);
+        if (ae.rzEvent != RZSBSDK_EVENT_INVALID && ae.rzEvent != RZSBSDK_EVENT_NONE) aeq.push(ae);
 
         return hr;
     }
